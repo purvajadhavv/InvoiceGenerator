@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Invoice Generator</title>
+<style>
+:root{--bg:#f2f1ec;--panel:#fff;--ink:#1c1b19;--sub:#6b675f;--line:#e4e1d8;--accent:#8a5cf6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit}.top{max-width:1400px;margin:auto;padding:20px}.top h1{margin:0 0 4px;font-size:20px}.top p{margin:0;color:var(--sub);font-size:13px}
+.dashboard{max-width:1000px;margin:30px auto;padding:20px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.profile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;cursor:pointer}.profile:hover{border-color:#aaa}.profile h3{margin:0 0 7px}.profile p{font-size:12px;color:var(--sub);min-height:32px}.profile button{width:100%;padding:10px;border:0;border-radius:8px;background:var(--ink);color:#fff;font-weight:700;cursor:pointer}
+#editor{display:none}.template-bar{max-width:1400px;margin:0 auto;padding:0 20px;display:flex;gap:8px;flex-wrap:wrap}.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;cursor:pointer;font-weight:600;color:var(--sub)}.chip.active{border-color:var(--ink);color:var(--ink)}
+.layout{max-width:1400px;margin:16px auto 50px;padding:0 20px;display:grid;grid-template-columns:400px 1fr;gap:20px}.form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;max-height:calc(100vh - 25px);overflow:auto;position:sticky;top:15px}details{border-bottom:1px solid var(--line)}summary{padding:14px 12px;font-weight:700;font-size:13px;cursor:pointer}.body{padding:0 12px 16px;display:flex;flex-direction:column;gap:10px}.field label{display:block;font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;padding:9px;border:1.5px solid var(--line);border-radius:8px;background:#fdfdfc}.field textarea{resize:vertical;min-height:55px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.item{border:1.5px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#fbfbfa}.head{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px}.head button,.subhead button{border:0;background:none;color:#b3413e;font-weight:700;cursor:pointer}.add{width:100%;padding:10px;border:1.5px dashed var(--line);background:none;border-radius:8px;color:var(--accent);font-weight:700;cursor:pointer}.subitems{margin:8px 0 4px;padding-left:12px;border-left:2px solid var(--line)}.sub{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0}.subhead{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px}.back{margin:0 0 10px;padding:8px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}.preview{min-width:0}.scroll{overflow:auto;display:flex;justify-content:center;padding:6px}.paper{width:794px;min-height:1123px;background:#fff;box-shadow:0 4px 24px #00000014}.download{text-align:center;margin-top:12px}.download button{padding:13px 24px;border:0;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;cursor:pointer}.mobile{display:none;gap:8px;margin:10px 20px}.mobile button{flex:1;padding:10px;border:1px solid var(--line);background:#fff;border-radius:8px}.mobile .active{border-color:var(--ink);font-weight:700}
+@media(max-width:980px){.cards{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.form{position:static;max-height:none}.mobile{display:flex}.layout.formOnly .preview{display:none}.layout.previewOnly .form{display:none}}
+</style>
+</head>
+<body>
+<div class="top"><h1>AI Invoice Generator</h1><p>Choose a saved profile or create a new invoice.</p></div>
+
+<div id="dashboard" class="dashboard">
+  <div class="cards">
+    <div class="profile"><h3>Purva</h3><p>Saved business, bank and payment details.</p><button onclick="startInvoice('purva')">Create Invoice</button></div>
+    <div class="profile"><h3>Harsh</h3><p>Saved business, bank and payment details.</p><button onclick="startInvoice('harsh')">Create Invoice</button></div>
+    <div class="profile"><h3>+ Create New Invoice</h3><p>Start with blank details.</p><button onclick="startInvoice('new')">Create New</button></div>
+  </div>
+</div>
+
+<div id="editor">
+  <div style="max-width:1400px;margin:15px auto;padding:0 20px"><button class="back" onclick="goHome()">← Back to profiles</button></div>
+  <div class="template-bar" id="templateBar"></div>
+  <div class="mobile"><button id="editBtn" class="active" onclick="mobileView('form')">Edit details</button><button id="previewBtn" onclick="mobileView('preview')">Preview invoice</button></div>
+
+  <div class="layout formOnly" id="layout">
+    <div class="form" id="formPanel">
+      <details open><summary>Your business</summary><div class="body">
+        <div class="field"><label>Name / business</label><input id="bizName"></div>
+        <div class="row2"><div class="field"><label>Email</label><input id="bizEmail"></div><div class="field"><label>Phone</label><input id="bizPhone"></div></div>
+        <div class="field"><label>Address</label><textarea id="bizAddress"></textarea></div>
+      </div></details>
+      <details><summary>Bill to</summary><div class="body">
+        <div class="field"><label>Client name</label><input id="cliName"></div>
+        <div class="row2"><div class="field"><label>Email</label><input id="cliEmail"></div><div class="field"><label>Phone</label><input id="cliPhone"></div></div>
+        <div class="field"><label>Address</label><textarea id="cliAddress"></textarea></div>
+      </div></details>
+      <details open><summary>Invoice details</summary><div class="body">
+        <div class="field"><label>Invoice title</label><input id="invTitle" value="INVOICE"></div>
+        <div class="row2"><div class="field"><label>Invoice / Sr no.</label><input id="invNo" placeholder="INV-001"></div><div class="field"><label>Invoice date</label><input id="invDate" type="date"></div></div>
+        <div class="field"><label>Due date</label><input id="invDue" type="date"></div>
+      </div></details>
+      <details open><summary>Items & sub-items</summary><div class="body"><div id="itemsList"></div><button class="add" onclick="addItem()">+ Add item</button></div></details>
+      <details><summary>Charges & tax</summary><div class="body">
+        <div class="row2"><div class="field"><label>Discount</label><input id="discVal" type="number" value="0"></div><div class="field"><label>Discount type</label><select id="discType"><option value="flat">Flat ₹</option><option value="percent">Percent %</option></select></div></div>
+        <div class="row2"><div class="field"><label>Coupon code</label><input id="couponCode"></div><div class="field"><label>Coupon discount ₹</label><input id="couponAmt" type="number" value="0"></div></div>
+        <div class="row3"><div class="field"><label>GST %</label><input id="gstPct" type="number" value="0"></div><div class="field"><label>CGST %</label><input id="cgstPct" type="number" value="0"></div><div class="field"><label>SGST %</label><input id="sgstPct" type="number" value="0"></div></div>
+        <div class="row2"><div class="field"><label>Extra label</label><input id="extraLabel" placeholder="Shipping"></div><div class="field"><label>Extra ₹</label><input id="extraAmt" type="number" value="0"></div></div>
+      </div></details>
+      <details><summary>Bank & payment</summary><div class="body">
+        <div class="field"><label>Bank name</label><input id="bankName"></div>
+        <div class="row2"><div class="field"><label>Account number</label><input id="bankAcc"></div><div class="field"><label>IFSC</label><input id="bankIfsc"></div></div>
+        <div class="field"><label>UPI ID</label><input id="upiId"></div>
+      </div></details>
+      <details><summary>Notes & signature</summary><div class="body">
+        <div class="field"><label>Thank you note</label><input id="thankYou" value="Thank you for your business!"></div>
+        <div class="field"><label>Terms / notes</label><textarea id="terms"></textarea></div>
+        <div class="field"><label>Signature</label><canvas id="sigPad" width="700" height="220" style="width:100%;height:110px;border:1.5px dashed var(--line);border-radius:8px;touch-action:none"></canvas>
+        <input id="sigType" placeholder="Or type your name" style="margin-top:6px;width:100%;padding:9px;border:1.5px solid var(--line);border-radius:8px">
+        <button class="add" style="margin-top:6px" onclick="clearSig()">Clear signature</button></div>
+      </div></details>
+    </div>
+    <div class="preview"><div class="scroll"><div class="paper" id="invoicePreview"></div></div><div class="download"><button id="downloadBtn">⬇ Download PDF</button></div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
